@@ -5,38 +5,47 @@ using CounterStrikeSharp.API.Modules.Cvars;
 using CounterStrikeSharp.API.Modules.Timers;
 using System;
 using System.Text;
+using CounterStrikeSharp.API.Modules.Entities;
 using static CounterStrikeSharp.API.Core.Listeners;
 using Timer = CounterStrikeSharp.API.Modules.Timers.Timer;
 
 namespace FlashingHtmlHudFix
 
 {
-    [MinimumApiVersion(247)]
     public partial class FlashingHtmlHudFix : BasePlugin
     {
         public override string ModuleName => "FlashingHtmlHudFix";
         public override string ModuleVersion => "1.2";
         public override string ModuleAuthor => "Deana + Oz-Lin";
 
-        // Modification: Track the warmup timer and end it properly
-
         private CCSGameRules? _gameRules;
         private float _warmupEndTime;
         private bool _warmupEnded;
         private Timer? _timer;
-       // private ConVar? _warmupTime;
+        private bool _warmupStarted;
 
         public override void Load(bool hotReload)
         {
             RegisterListener<Listeners.OnTick>(OnTick);
             RegisterListener<Listeners.OnMapStart>(OnMapStartHandler);
+            RegisterEventHandler<EventPlayerConnectFull>(OnPlayerConnectFullHandler, HookMode.Post);
+        }
+
+        private HookResult OnPlayerConnectFullHandler(EventPlayerConnectFull @event, GameEventInfo info)
+        {
+            if (!_warmupStarted)
+            {
+                _warmupStarted = true;
+                InitializeWarmupTime();
+            }
+            return HookResult.Continue;
         }
 
         private void OnMapStartHandler(string mapName)
         {
             _gameRules = null;
             _warmupEnded = false;
-            InitializeWarmupTime();
+            _warmupStarted = false;
         }
 
         private void InitializeGameRules()
@@ -60,8 +69,6 @@ namespace FlashingHtmlHudFix
             {
                 if (warmupTime <= 0)
                 {
-
-
                     if (!_warmupEnded)
                     {
                         var remainingTime = _warmupEndTime - Server.CurrentTime;
@@ -69,12 +76,15 @@ namespace FlashingHtmlHudFix
                         {
                             foreach (var player in Utilities.GetPlayers())
                             {
-                                player.PrintToCenter($"Warmup {remainingTime:F1}s");
+                                if (player.IsValid)
+                                {
+                                    player.PrintToCenter($"Warmup {remainingTime:F1}s");
+                                }
                             }
                         }
-                        else 
+                        else
                         {
-                            Server.ExecuteCommand("mp_restartgame 5");
+                            Server.ExecuteCommand("mp_restartgame 15");
                             _warmupEnded = true;
                             _timer!.Kill();
                         }
@@ -84,9 +94,7 @@ namespace FlashingHtmlHudFix
                 {
                     warmupTime--;
                 }
-            }, TimerFlags.REPEAT | TimerFlags.STOP_ON_MAPCHANGE );
-
-
+            }, TimerFlags.REPEAT | TimerFlags.STOP_ON_MAPCHANGE);
         }
 
         private void OnTick()
@@ -95,7 +103,6 @@ namespace FlashingHtmlHudFix
             {
                 InitializeGameRules();
             }
-
             else
             {
                 _gameRules.GameRestart = _gameRules.RestartRoundTime < Server.CurrentTime;
