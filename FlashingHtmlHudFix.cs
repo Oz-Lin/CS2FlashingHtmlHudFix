@@ -3,8 +3,10 @@ using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Core.Attributes;
 using CounterStrikeSharp.API.Modules.Cvars;
 using CounterStrikeSharp.API.Modules.Timers;
+using CounterStrikeSharp.API.Modules.Events;
 using System;
 using System.Text;
+using System.Web;
 using CounterStrikeSharp.API.Modules.Entities;
 using static CounterStrikeSharp.API.Core.Listeners;
 using Timer = CounterStrikeSharp.API.Modules.Timers.Timer;
@@ -23,6 +25,8 @@ namespace FlashingHtmlHudFix
         private bool _warmupEnded;
         private Timer? _timer;
         private bool _warmupStarted;
+        private float _restartTime = 15;
+        private float _remainingTime;
 
         public override void Load(bool hotReload)
         {
@@ -65,22 +69,23 @@ namespace FlashingHtmlHudFix
             {
                 _warmupEndTime = Server.CurrentTime + 90; // default 90 seconds
             }
+
+            _remainingTime = _warmupEndTime - Server.CurrentTime;
+
             _timer = AddTimer(1.0F, () =>
             {
                 if (warmupTime <= 0)
                 {
                     if (!_warmupEnded)
                     {
-                        var remainingTime = _warmupEndTime - Server.CurrentTime;
-                        if (remainingTime >= 0)
+                        _remainingTime = _warmupEndTime - Server.CurrentTime;
+                        if (_remainingTime >= 0)
                         {
-                            foreach (var player in Utilities.GetPlayers())
+                            foreach (CCSPlayerController player in Utilities.GetPlayers())
                             {
-                                if (player.IsValid)
-                                {
-                                    player.PrintToCenter($"Warmup {remainingTime:F1}s");
-                                }
+                                    player.PrintToCenter($"Warmup {_remainingTime:d}s");
                             }
+                            //Server.PrintToChatAll($"Warmup {_remainingTime:d}s");
                         }
                         else
                         {
@@ -94,7 +99,7 @@ namespace FlashingHtmlHudFix
                 {
                     warmupTime--;
                 }
-            }, TimerFlags.REPEAT | TimerFlags.STOP_ON_MAPCHANGE);
+            }, TimerFlags.REPEAT);
         }
 
         private void OnTick()
