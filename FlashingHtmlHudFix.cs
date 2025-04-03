@@ -83,9 +83,9 @@ namespace FlashingHtmlHudFix
                         {
                             foreach (CCSPlayerController player in Utilities.GetPlayers())
                             {
-                                    player.PrintToCenter($"Warmup {_remainingTime:d}s");
+                                    player.PrintToCenter($"Warmup {_remainingTime:F1}s");
                             }
-                            //Server.PrintToChatAll($"Warmup {_remainingTime:d}s");
+                            //Server.PrintToChatAll($"Warmup {_remainingTime:F1}s");
                         }
                         else
                         {
