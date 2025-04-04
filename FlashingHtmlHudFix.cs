@@ -89,7 +89,8 @@ namespace FlashingHtmlHudFix
                         }
                         else
                         {
-                            Server.ExecuteCommand("mp_restartgame 15");
+                            Server.PrintToChatAll($"Warmup ended, restarting round in {_restartTime}s");
+                            Server.ExecuteCommand($"mp_restartgame {_restartTime}");
                             _warmupEnded = true;
                             _timer!.Kill();
                         }
