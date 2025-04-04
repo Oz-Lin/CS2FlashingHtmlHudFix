@@ -100,7 +100,7 @@ namespace FlashingHtmlHudFix
                 {
                     warmupTime--;
                 }
-            }, TimerFlags.REPEAT);
+            }, TimerFlags.REPEAT | TimerFlags.STOP_ON_MAPCHANGE);
         }
 
         private void OnTick()
